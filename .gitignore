@@ -1,0 +1,21 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Archivos temporales
+*.log
+*.tmp
+*.DS_Store
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+
+#Otros
+Estructura.txt
+Ideas.txt
