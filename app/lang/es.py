@@ -1,5 +1,5 @@
 # Diccionario de cadenas de texto en español
-from app.config import FORMATOS_TEXTO
+from app.utils.config import FORMATOS_TEXTO
 
 text_gradio_ui = {
     "titulo_app": "🖼️ HUD Remover X10",

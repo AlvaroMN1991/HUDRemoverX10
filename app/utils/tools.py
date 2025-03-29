@@ -2,7 +2,9 @@ from PIL import Image, ExifTags
 from typing import Union
 from app.lang.es import text_gradio_ui
 import os
+import torch
 
+#Obtiiene las propiedades de una imagen.
 def obtener_propiedades_imagen(image: Image.Image, nombre_archivo: Union[str, None] = None) -> str:
     propiedades = []
 
@@ -28,3 +30,9 @@ def obtener_propiedades_imagen(image: Image.Image, nombre_archivo: Union[str, No
         propiedades.append(text_gradio_ui["exif_error"].format(error=e))
 
     return "\n".join(propiedades)
+
+
+
+#Indica si hay GPU disponible o no. Devuelve 0 si hay GPU disponible, -1 si no.
+def get_device_id() -> str:
+    return "cuda" if torch.cuda.is_available() else "cpu"
