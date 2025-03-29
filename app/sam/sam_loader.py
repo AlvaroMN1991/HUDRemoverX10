@@ -17,6 +17,7 @@ class MascaraSegmentada:
     color: Tuple[int, int, int]              # Color RGB asignado
     miniatura: Image.Image                   # Imagen de vista previa coloreada
     sam_original: dict                       # Objeto original de SAM con metadatos
+    id:int = -1                              # ID de la máscara (opcional, para referencia)
 
 def descargar_modelo_si_no_existe(tipo_modelo: str, carpeta_modelos: str = "models") -> str:
     # Verifica y descarga el modelo si no existe
@@ -84,7 +85,7 @@ def segmentar_automaticamente(imagen_pil: Image.Image, modelo_sam) -> tuple[List
         overlay = imagen_np.copy()
 
         # Recorremos cada máscara generada
-        for mask in masks:
+        for idx, mask in enumerate(masks):
             try:
                 seg = mask["segmentation"].astype(np.uint8)  # binaria 0/1
 
@@ -104,7 +105,7 @@ def segmentar_automaticamente(imagen_pil: Image.Image, modelo_sam) -> tuple[List
                 overlay = cv2.addWeighted(overlay, 1.0, rgb_mask, 0.5, 0)
 
                 # Guardamos el objeto completo con máscara, color, miniatura y metadatos
-                objetos_mascaras.append(MascaraSegmentada(binaria=seg, color=color, miniatura=miniatura_pil,sam_original=mask))
+                objetos_mascaras.append(MascaraSegmentada(binaria=seg, color=color, miniatura=miniatura_pil,sam_original=mask, id=idx))
             
             except Exception as e:
                 print(f"Error procesando una máscara: {e}")

@@ -52,8 +52,8 @@ def lanzar_segmentacion(filepath: str, modelo_clave: str):
         mascaras_memoria, imagen_combinada = segmentar_automaticamente(imagen, modelo)
 
         # Miniaturas coloreadas
-        miniaturas_coloreadas = [m.miniatura for m in mascaras_memoria]
-        opciones_selector = [str(i) for i in range(len(mascaras_memoria))]
+        miniaturas_coloreadas = [(m.miniatura, f"Máscara #{m.id}") for m in mascaras_memoria] #Guardamos las mascaras con su ID para el selector de mascaras       
+        opciones_selector = [m.id for m in mascaras_memoria] #Guardamos el ID para los checkboxes
 
         return miniaturas_coloreadas, imagen_combinada, gr.update(choices=opciones_selector, value=[])
     except Exception as e:
@@ -96,15 +96,21 @@ def launch_interface():
                 with gr.Column():
                 # Cuadro para subida de imagen
                     with gr.Tab("Imágen original"):
-                        image_input = gr.Image(type="filepath", label=f"{text_gradio_ui['subir_imagen']} {FORMATOS_TEXTO}") 
-                with gr.Column():
-                    with gr.Tab("Mascaras"):
-                        mascaras = gr.Gallery(label="🧩 Segmentos individuales", columns=4, rows=2, show_label=True)
-                        segment_selector = gr.CheckboxGroup(label="🎯 Selecciona máscaras a mostrar", choices=[], interactive=True)
+                        image_input = gr.Image(type="filepath", label=f"{text_gradio_ui['subir_imagen']} {FORMATOS_TEXTO}")                         
                     with gr.Tab("Mascaras Combinadas"):
                         combined_mask_preview = gr.Image(label="🧵 Vista general de todas las segmentaciones", interactive=False)
+                with gr.Column():
+                    with gr.Tab("Mascaras"):
+                        with gr.Column():
+                            mascaras = gr.Gallery(label="🧩 Segmentos individuales", columns=4, rows=2, show_label=False)
+                        with gr.Column():
+                            segment_selector = gr.CheckboxGroup(label="🎯 Selecciona máscaras a mostrar", choices=[], interactive=True)
+                    with gr.Tab("Mascaras Combinadas"):
+                        combined_mask_preview2 = gr.Image(label="🧵 Vista general de todas las segmentaciones", interactive=False)
                     with gr.Tab("Imagen Final"):
-                        image_output = gr.Image(label="✅ Imagen sin HUD", interactive=False)               
+                        image_output = gr.Image(label="✅ Imagen sin HUD", interactive=False)
+                
+                     
         
         with gr.Row(): 
             with gr.Column():
