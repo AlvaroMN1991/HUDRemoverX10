@@ -16,6 +16,9 @@ __pycache__/
 .vscode/
 .idea/
 
+#Modelos
+*.pth
+
 #Otros
 Estructura.txt
 Ideas.txt
