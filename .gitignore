@@ -16,7 +16,11 @@ __pycache__/
 .vscode/
 .idea/
 
+<<<<<<< HEAD
 #Modelos
+=======
+#Modelos SAM
+>>>>>>> dev
 *.pth
 
 #Otros

@@ -1,2 +1,7 @@
 gradio
 pillow
+git+https://github.com/facebookresearch/segment-anything.git
+opencv-python
+torch>=1.10
+torchvision
+numpy<2.0  # Temporalmente necesario por compatibilidad
