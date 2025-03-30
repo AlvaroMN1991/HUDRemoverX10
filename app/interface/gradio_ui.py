@@ -6,8 +6,10 @@ from typing import Optional, List
 from PIL import Image
 from app.lang.es import text_gradio_ui, text_general  # Importamos las cadenas de texto
 from app.utils.tools import obtener_propiedades_imagen, Image
-from app.utils.config import FORMATOS_TEXTO,FORMATOS_COMPATIBLES 
+from app.utils.config import FORMATOS_TEXTO,FORMATOS_COMPATIBLES, TipoInpainting
 from app.sam.sam_loader import cargar_sam_online, segmentar_automaticamente, MascaraSegmentada
+from app.inpainting.InpaintingBase import InpaintingBase  
+from app.inpainting.OpenCVInpainting import OpenCVInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 
 # Variables globales para mantener el estado de la segmentación
 mascaras_memoria: List[MascaraSegmentada] = []  # Lista de objetos de máscaras segmentadas
@@ -85,7 +87,37 @@ def actualizar_mascaras_selector(indices: List[str]) -> Image.Image:
 
     return generar_imagen_con_mascaras_combinadas(imagen_base_np, mascaras, colores)
 
+# Esta función se llama cuando el usuario pulsa "Eliminar HUD"
+# Toma las máscaras seleccionadas por el usuario y elimina esas regiones de la imagen
+def lanzar_inpainting(metodo_inpainting: int, indices: list[str], filepath: str) -> Image.Image:    
+    try:
+        if filepath is None or not os.path.exists(filepath):
+            return Image.new("RGB", (512, 512), (255, 0, 0))  # Imagen roja si algo va mal
+        try:
+            imagen = Image.open(filepath)   
+        except Exception as e:
+            return Image.new("RGB", (512, 512), (255, 0, 0))  # Imagen roja si algo va malImage.new("RGB", (512, 512), (255, 0, 0))  # Imagen roja si algo va mal
 
+        # Validamos estado
+        if not indices or not mascaras_memoria:
+            return Image.new("RGB", (512, 512), (255, 0, 0))  # Imagen roja si algo va mal
+
+        # Convertimos los índices a enteros
+        seleccionados = list(map(int, indices))
+
+        # Filtramos solo las máscaras elegidas
+        mascaras_a_eliminar = [mascaras_memoria[i] for i in seleccionados]
+
+        # Creamos el objeto de inpainting usando la factoría
+        inpainter = InpaintingBase.crear(TipoInpainting(metodo_inpainting))
+
+        # Ejecutamos la eliminación
+        imagen_sin_hud = inpainter.eliminar_objetos(imagen, mascaras_a_eliminar)
+    except Exception as e:
+        print(f"❌ Error en inpainting: {e}")
+        imagen_sin_hud = Image.new("RGB", (512, 512), (255, 0, 0))  # Imagen roja si algo va mal
+        
+    return imagen_sin_hud
 
 # Esta función crea la interfaz gráfica con Gradio
 def launch_interface():
@@ -117,28 +149,29 @@ def launch_interface():
                 # Cuadro con las propiedades de la imagen
                 with gr.Tab(text_gradio_ui["propiedades_imagen"]):  
                     image_info = gr.Textbox(label="", lines=4, interactive=False) 
-            with gr.Tab("Inpainting y Remover"):
+            with gr.Tab("Modelo de Segmentación"):
                 with gr.Column():
                     opciones_sam = [("SAM B (rápido, poca precisión)", "vit_b"), ("SAM L (Equilibrado)", "vit_l"), ("SAM H (El más preciso)", "vit_h")]
                     sam_selector = gr.Radio(label="🧠 Modelo de SAM", choices=opciones_sam,  value="vit_b" ,interactive=True)
                 with gr.Column():
-                    opciones_inpainting = [("OpenCV", "1"), ("LaMa", "2"), ("Stable Diffusion", "3")]
+                    opciones_inpainting = [("Automático", 0), ("Punto", 1), ("Caja", 2), ("Pincel", 3)]
                     inpaint_selector = gr.Radio(label="🧠 Modelo de Inpainting", choices=opciones_inpainting, value="1", interactive=True)
             with gr.Tab("Editor de imágen"):                
                 with gr.Column():
-                    opciones_inpainting = [("OpenCV", "1"), ("LaMa", "2"), ("Stable Diffusion", "3")]
-                    inpaint_selector = gr.Radio(label="🧠 Modelo de Inpainting", choices=opciones_inpainting, value="1", interactive=True)
-                with gr.Column():
-                    opciones_sam2 = [("SAM B (rápido, poca precisión)", "vit_b"), ("SAM L (Equilibrado)", "vit_l"), ("SAM H (El más preciso)", "vit_h")]
-                    sam_selector2 = gr.Radio(label="🧠 Modelo de SAM", choices=opciones_sam2, interactive=True)
+                    opciones_inpainting = [("OpenCV", 0), ("LaMa", 1), ("Stable Diffusion", 2)]
+                    inpaint_selector = gr.Radio(label="🧠 Modelo de Inpainting", choices=opciones_inpainting, value=0, interactive=True)                
         with gr.Row():
             segment_button = gr.Button("📐 Detectar Segmentos")
             apply_button = gr.Button("🧹 Eliminar HUD")  
 
         # Cada vez que se suba una imagen, se llamará a esta función para analizarla
         image_input.change(fn=get_image_properties, inputs=image_input, outputs=image_info)
+        # Al pulsar este boton, lanzamos el calculo de mascaras de segmentacion
         segment_button.click(fn=lanzar_segmentacion, inputs=[image_input, sam_selector], outputs=[mascaras, combined_mask_preview, segment_selector])
+        # Cuando el usuario va marcando mascaras en el checkbox, se actualiza la imagen de mascaras combinadas
         segment_selector.change(fn=actualizar_mascaras_selector, inputs=segment_selector, outputs=combined_mask_preview)
+        # Al pulsar el botón, se llama a la función de inpainting
+        apply_button.click(fn=lanzar_inpainting, inputs=[inpaint_selector, segment_selector, image_input], outputs=image_output)
 
 
     #descomentar para produccion
