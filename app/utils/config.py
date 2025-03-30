@@ -1,3 +1,5 @@
+from enum import Enum
+
 # Formatos de imagen compatibles con Pillow
 FORMATOS_COMPATIBLES = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
 FORMATOS_TEXTO = ", ".join(ext.upper().replace(".", "") for ext in FORMATOS_COMPATIBLES)
@@ -8,3 +10,8 @@ MODEL_URLS = {
     "vit_l": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth",
     "vit_h": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
 }
+
+class TipoInpainting(Enum):
+    OpenCV = 0
+    StableDiffusion = 1
+    LaMa = 2
