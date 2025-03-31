@@ -10,6 +10,7 @@ from app.utils.config import FORMATOS_TEXTO,FORMATOS_COMPATIBLES, TipoInpainting
 from app.sam.sam_loader import cargar_sam_online, segmentar_automaticamente, MascaraSegmentada
 from app.inpainting.InpaintingBase import InpaintingBase  
 from app.inpainting.OpenCVInpainting import OpenCVInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
+from app.inpainting.LaMaInpainting import LaMaInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 
 # Variables globales para mantener el estado de la segmentación
 mascaras_memoria: List[MascaraSegmentada] = []  # Lista de objetos de máscaras segmentadas
@@ -111,8 +112,12 @@ def lanzar_inpainting(metodo_inpainting: int, indices: list[str], filepath: str)
         # Creamos el objeto de inpainting usando la factoría
         inpainter = InpaintingBase.crear(TipoInpainting(metodo_inpainting))
 
+        # Cargamos el modelo si fuera necesario
+        inpainter.cargar_modelo()
+
         # Ejecutamos la eliminación
         imagen_sin_hud = inpainter.eliminar_objetos(imagen, mascaras_a_eliminar)
+        
     except Exception as e:
         print(f"❌ Error en inpainting: {e}")
         imagen_sin_hud = Image.new("RGB", (512, 512), (255, 0, 0))  # Imagen roja si algo va mal

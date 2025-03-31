@@ -12,6 +12,6 @@ MODEL_URLS = {
 }
 
 class TipoInpainting(Enum):
-    OpenCV = 0
-    StableDiffusion = 1
-    LaMa = 2
+    OpenCV = 0    
+    LaMa = 1
+    StableDiffusion = 2
