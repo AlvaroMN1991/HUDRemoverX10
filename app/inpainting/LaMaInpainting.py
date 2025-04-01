@@ -45,7 +45,6 @@ class LaMaInpainting(InpaintingBase):
             print(f"[LamaInpainter] Error durante crop_around_mask: {e}")
             return [], [], []
 
-
     def safe_paste_patch(self, base_img, patch, offset_x, offset_y):
         try:
             h_base, w_base = base_img.shape[:2]
@@ -93,7 +92,40 @@ class LaMaInpainting(InpaintingBase):
             print(f"[LamaInpainter] Error durante inpainting: {e}")
             return mascara
 
-    #Elimina objetos en la imagen usando LaMa. Combina todas las máscaras y realiza inpainting con LaMa.
+    #Aplica dilatación y desenfoque a la máscara para suavizar bordes y mejorar el relleno visual.
+    def mejorar_mascara(self, mascara: np.ndarray, kernel_size: int = 7, sigma: int = 5, dilatacion_iter: int = 2) -> np.ndarray:    
+        try:
+            if mascara.max() <= 1:
+                mascara = (mascara * 255).astype(np.uint8)
+            else:
+                mascara = mascara.astype(np.uint8)
+
+            kernel = np.ones((kernel_size, kernel_size), np.uint8)
+            mascara_dilatada = cv2.dilate(mascara, kernel, iterations=dilatacion_iter)
+            mascara_suavizada = cv2.GaussianBlur(mascara_dilatada, (kernel_size, kernel_size), sigmaX=sigma)
+            return (mascara_suavizada > 10).astype(np.uint8) * 255
+        except Exception as e:
+            return mascara
+        
+    #Aplica un suavizado en los bordes del parche usando la máscara como alfa de mezcla.
+    def suavizar_transicion(self, parche: np.ndarray, original: np.ndarray, mascara: np.ndarray, feather_size: int = 15) -> np.ndarray:
+        try:
+            # Asegurar que la máscara tiene un canal
+            if mascara.ndim == 3:
+                mascara = mascara[:, :, 0]
+
+            # Crear máscara de mezcla difuminada
+            alpha = cv2.GaussianBlur(mascara, (feather_size, feather_size), sigmaX=feather_size//2)
+            alpha = alpha.astype(np.float32) / 255.0
+            alpha = np.clip(alpha, 0, 1)
+
+            # Aplicar mezcla entre parche y original
+            parche_fusionado = parche.astype(np.float32) * alpha[..., None] + original.astype(np.float32) * (1 - alpha[..., None])
+            return parche_fusionado.astype(np.uint8)
+        except Exception as e:
+            return parche
+        
+     #Elimina objetos en la imagen usando LaMa. Combina todas las máscaras y realiza inpainting con LaMa.
     def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:
     
         try:
@@ -164,6 +196,9 @@ class LaMaInpainting(InpaintingBase):
             # --- Recorte padding post-inpainting ---
             if pad_h > 0 or pad_w > 0:
                 resultado = resultado[:-pad_h or None, :-pad_w or None, :]
+
+            parche_suavizado = self.suavizar_transicion(resultado, cropped_img, cropped_mask)
+            final_img = self.safe_paste_patch(imagen_np.copy(), parche_suavizado, offset_x, offset_y)
 
             # --- Pegamos el resultado de vuelta sobre la imagen original ---
             final_img = self.safe_paste_patch(imagen_np.copy(), resultado, offset_x, offset_y)
