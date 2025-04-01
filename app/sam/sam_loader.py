@@ -98,6 +98,17 @@ def segmentar_automaticamente(imagen_pil: Image.Image, modelo_sam) -> tuple[List
         # Si no se detectaron máscaras, devolvemos vacío
         if not masks:
             return [], imagen_pil
+    
+        mascaras_filtradas = []
+        for m in masks:
+            if m["predicted_iou"] >= 0.9:
+                mascaras_filtradas.append(m) 
+
+        if not mascaras_filtradas:
+            print("⚠️ SAM no encontró máscaras con score suficiente. Usando todas.")
+            mascaras_filtradas = masks
+        else:
+            masks = mascaras_filtradas
 
         # Ordenamos las máscaras desde la esquina superior izquierda
         masks = sorted(masks, key=distancia_desde_origen)
