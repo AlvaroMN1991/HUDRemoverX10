@@ -91,21 +91,6 @@ class LaMaInpainting(InpaintingBase):
         except Exception as e:
             print(f"[LamaInpainter] Error durante inpainting: {e}")
             return mascara
-
-    #Aplica dilatación y desenfoque a la máscara para suavizar bordes y mejorar el relleno visual.
-    def mejorar_mascara(self, mascara: np.ndarray, kernel_size: int = 7, sigma: int = 5, dilatacion_iter: int = 2) -> np.ndarray:    
-        try:
-            if mascara.max() <= 1:
-                mascara = (mascara * 255).astype(np.uint8)
-            else:
-                mascara = mascara.astype(np.uint8)
-
-            kernel = np.ones((kernel_size, kernel_size), np.uint8)
-            mascara_dilatada = cv2.dilate(mascara, kernel, iterations=dilatacion_iter)
-            mascara_suavizada = cv2.GaussianBlur(mascara_dilatada, (kernel_size, kernel_size), sigmaX=sigma)
-            return (mascara_suavizada > 10).astype(np.uint8) * 255
-        except Exception as e:
-            return mascara
         
     #Aplica un suavizado en los bordes del parche usando la máscara como alfa de mezcla.
     def suavizar_transicion(self, parche: np.ndarray, original: np.ndarray, mascara: np.ndarray, feather_size: int = 15) -> np.ndarray:

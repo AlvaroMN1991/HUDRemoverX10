@@ -15,3 +15,9 @@ class TipoInpainting(Enum):
     OpenCV = 0    
     LaMa = 1
     StableDiffusion = 2
+
+class TipoSegmentacion(Enum):
+    Automatico = 0
+    Punto = 1
+    Caja = 2
+    Pincel = 3
