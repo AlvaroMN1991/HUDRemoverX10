@@ -7,7 +7,7 @@ from PIL import Image
 from app.lang.es import text_gradio_ui, text_general  # Importamos las cadenas de texto
 from app.utils.tools import obtener_propiedades_imagen, Image
 from app.utils.config import FORMATOS_TEXTO,FORMATOS_COMPATIBLES, TipoInpainting
-from app.sam.sam_loader import cargar_sam_online, segmentar_automaticamente, MascaraSegmentada
+from app.sam.sam_loader import cargar_sam_online, segmentar_automaticamente, MascaraSegmentada, mejorar_imagen_para_segmentacion
 from app.inpainting.InpaintingBase import InpaintingBase  
 from app.inpainting.OpenCVInpainting import OpenCVInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 from app.inpainting.LaMaInpainting import LaMaInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
@@ -50,6 +50,9 @@ def lanzar_segmentacion(filepath: str, modelo_clave: str):
     
     try:
         modelo = cargar_sam_online(modelo_clave)
+
+        #lo dejo comentado de momento, pero ayuda en la segmentacion.
+        #imagen = Image.fromarray(mejorar_imagen_para_segmentacion(np.array(imagen.convert("RGB"))))
 
         # Recuperamos las máscaras como objetos MascaraSegmentada + imagen combinada
         mascaras_memoria, imagen_combinada = segmentar_automaticamente(imagen, modelo)
