@@ -8,7 +8,7 @@ import os
 import urllib.request
 from segment_anything import SamAutomaticMaskGenerator, sam_model_registry  # type: ignore
 from app.utils.tools import get_device_id
-from app.utils.config import MODEL_URLS
+from app.utils.config import MODEL_URLS, TipoSegmentacion
 
 # Clase para encapsular información de cada máscara
 @dataclass
@@ -35,7 +35,7 @@ def descargar_modelo_si_no_existe(tipo_modelo: str, carpeta_modelos: str = "mode
     return ruta_local
 
 
-def cargar_sam_online(model_name: str):
+def cargar_sam_online(model_name: str, modo:int):
     # Carga el modelo SAM desde el repositorio oficial
     try:
         checkpoint_path = descargar_modelo_si_no_existe(model_name)
@@ -43,7 +43,11 @@ def cargar_sam_online(model_name: str):
         device = get_device_id()
         modelo.to(device)
         modelo.eval()
-        return modelo
+        if TipoSegmentacion(modo) == TipoSegmentacion.Automatico:
+            return SamAutomaticMaskGenerator(modelo)
+        else:
+            return modelo  # devuelves el modelo crudo, para usar con SamPredictor
+      
     except Exception as e:
         print(f"❌ Error al cargar modelo SAM: {e}")
         raise
@@ -90,8 +94,9 @@ def segmentar_automaticamente(imagen_pil: Image.Image, modelo_sam) -> tuple[List
         imagen_np = np.array(imagen_pil.convert("RGB"))
 
         # Inicializamos el generador automático de máscaras
-        generator = SamAutomaticMaskGenerator(modelo_sam)
-
+        #generator = SamAutomaticMaskGenerator(modelo_sam)
+        generator = modelo_sam
+        
         # Generamos las máscaras
         masks = generator.generate(imagen_np)
 

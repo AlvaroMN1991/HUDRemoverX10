@@ -111,6 +111,7 @@ class LaMaInpainting(InpaintingBase):
             return parche
         
      #Elimina objetos en la imagen usando LaMa. Combina todas las máscaras y realiza inpainting con LaMa.
+    
     def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:
     
         try:
