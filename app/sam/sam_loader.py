@@ -8,7 +8,7 @@ import os
 import urllib.request
 from segment_anything import SamAutomaticMaskGenerator, sam_model_registry  # type: ignore
 from app.utils.tools import get_device_id
-from app.utils.config import MODEL_URLS
+from app.utils.config import MODEL_URLS, TipoSegmentacion
 
 # Clase para encapsular información de cada máscara
 @dataclass
@@ -35,7 +35,7 @@ def descargar_modelo_si_no_existe(tipo_modelo: str, carpeta_modelos: str = "mode
     return ruta_local
 
 
-def cargar_sam_online(model_name: str):
+def cargar_sam_online(model_name: str, modo:int):
     # Carga el modelo SAM desde el repositorio oficial
     try:
         checkpoint_path = descargar_modelo_si_no_existe(model_name)
@@ -43,7 +43,11 @@ def cargar_sam_online(model_name: str):
         device = get_device_id()
         modelo.to(device)
         modelo.eval()
-        return modelo
+        if TipoSegmentacion(modo) == TipoSegmentacion.Automatico:
+            return SamAutomaticMaskGenerator(modelo)
+        else:
+            return modelo  # devuelves el modelo crudo, para usar con SamPredictor
+      
     except Exception as e:
         print(f"❌ Error al cargar modelo SAM: {e}")
         raise
@@ -58,6 +62,28 @@ def distancia_desde_origen(mask: dict) -> float:
         print(f"Error calculando distancia desde origen: {e}")
         return float("inf")
 
+
+#Elimina máscaras cuya área sea menor que el umbral dado. De momento no usamos
+#Recibe:
+# - mascaras (List[np.ndarray]): Lista de máscaras binarias (0-255).
+# - umbral_pixeles (int): Área mínima permitida para conservar la máscara.
+#Decuelve:
+# - List[np.ndarray]: Lista filtrada de máscaras.
+def filtrar_mascaras_pequenas(mascaras: List[np.ndarray], umbral_pixeles: int = 500) -> List[np.ndarray]:
+    try:
+        mascaras_filtradas = []
+        for m in mascaras:
+            mask_array = m["segmentation"]
+            area = mask_array.sum() if mask_array.max() <= 1 else cv2.countNonZero(mask_array.astype(np.uint8))
+            if area >= umbral_pixeles:
+                mascaras_filtradas.append(m)
+        
+        return mascaras_filtradas      
+    except Exception as e:
+        print(f"❌ Error al filtrar mascaras en SAM: {e}")
+        return mascaras
+
+
 # Usa SAM para segmentar la imagen automáticamente y devolver las máscaras
 # Devuelve:
 # - Lista de objetos MascaraSegmentada con toda la info útil para postprocesado e interfaz
@@ -68,17 +94,31 @@ def segmentar_automaticamente(imagen_pil: Image.Image, modelo_sam) -> tuple[List
         imagen_np = np.array(imagen_pil.convert("RGB"))
 
         # Inicializamos el generador automático de máscaras
-        generator = SamAutomaticMaskGenerator(modelo_sam)
-
+        #generator = SamAutomaticMaskGenerator(modelo_sam)
+        generator = modelo_sam
+        
         # Generamos las máscaras
         masks = generator.generate(imagen_np)
 
         # Si no se detectaron máscaras, devolvemos vacío
         if not masks:
             return [], imagen_pil
+    
+        mascaras_filtradas = []
+        for m in masks:
+            if m["predicted_iou"] >= 0.9:
+                mascaras_filtradas.append(m) 
+
+        if not mascaras_filtradas:
+            print("⚠️ SAM no encontró máscaras con score suficiente. Usando todas.")
+            mascaras_filtradas = masks
+        else:
+            masks = mascaras_filtradas
 
         # Ordenamos las máscaras desde la esquina superior izquierda
         masks = sorted(masks, key=distancia_desde_origen)
+
+        #masks = filtrar_mascaras_pequenas(masks, umbral_pixeles=600)
 
         # Inicializamos lista de objetos de máscara y la imagen overlay
         objetos_mascaras: List[MascaraSegmentada] = []
@@ -119,3 +159,30 @@ def segmentar_automaticamente(imagen_pil: Image.Image, modelo_sam) -> tuple[List
     except Exception as e:
         print(f"Error general en segmentar_automaticamente: {e}")
         return [], imagen_pil
+
+
+#Mejora el contraste y nitidez de una imagen para optimizar la segmentación por SAM.
+#Entrada:
+# -imagen (np.ndarray): Imagen en formato BGR (OpenCV).    
+#Devuelve:
+# -np.ndarray: Imagen mejorada.
+def mejorar_imagen_para_segmentacion(imagen: np.ndarray) -> np.ndarray:
+    try:
+        # Aumentar contraste y brillo
+        imagen_contrastada = cv2.convertScaleAbs(imagen, alpha=1.3, beta=20)
+
+        # Convertir a espacio LAB para mejorar iluminación
+        lab = cv2.cvtColor(imagen_contrastada, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+
+        # Equalización adaptativa en canal L (luminancia)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        l_mejorado = clahe.apply(l)
+
+        # Reunir canales y volver a BGR
+        lab_mejorado = cv2.merge((l_mejorado, a, b))
+        imagen_mejorada = cv2.cvtColor(lab_mejorado, cv2.COLOR_LAB2BGR)
+        
+        return imagen_mejorada
+    except Exception as e:
+        return imagen

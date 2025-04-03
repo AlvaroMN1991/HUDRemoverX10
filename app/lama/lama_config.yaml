@@ -1,0 +1,63 @@
+run_title: big-lama-inference
+
+# Modelo y arquitectura
+model:
+  path: D:\IIA\HUDRemoverX10\app\lama\lamarepo\big-lama\models\best.ckpt  # ← Asegúrate de que este path exista
+  kind: ffc_resnet
+  input_nc: 4
+  output_nc: 3
+  ngf: 64
+  n_downsampling: 3
+  n_blocks: 18
+  add_out_act: sigmoid
+  init_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  downsample_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  resnet_conv_kwargs:
+    ratio_gin: 0.75
+    ratio_gout: 0.75
+    enable_lfu: false
+
+# Visualizador desactivado (evitamos dependencia de Detectron2)
+visualizer:
+  kind: noop
+
+# Claves requeridas por load_checkpoint pero no usadas en inferencia
+training_model:
+  kind: default
+  predict_only: true
+
+trainer:
+  kwargs: {}
+  checkpoint_kwargs: {}
+
+losses: {}
+optimizers: {}
+discriminator: {}
+evaluator: {}
+
+generator:
+  kind: ffc_resnet
+  input_nc: 4
+  output_nc: 3
+  ngf: 64
+  n_downsampling: 3
+  n_blocks: 18
+  add_out_act: sigmoid
+  init_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  downsample_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  resnet_conv_kwargs:
+    ratio_gin: 0.75
+    ratio_gout: 0.75
+    enable_lfu: false
