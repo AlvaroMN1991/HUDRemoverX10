@@ -11,6 +11,7 @@ from app.sam.sam_loader import cargar_sam_online, segmentar_automaticamente, Mas
 from app.inpainting.InpaintingBase import InpaintingBase  
 from app.inpainting.OpenCVInpainting import OpenCVInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 from app.inpainting.LaMaInpainting import LaMaInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
+from app.inpainting.StableDiffusionInpainting import StableDiffusionInpainting #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 from app.sam.SegmentadorPuntos import SegmentadorPorPunto #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 from app.sam.SegmentadorBase import SegmentadorBase, Segmentacion #Esto lo hacemmos para que se registre la clase y podamos usarla dinamicamente
 
