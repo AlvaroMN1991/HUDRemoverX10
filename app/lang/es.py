@@ -17,6 +17,7 @@ text_gradio_ui = {
     "exif_no_disponible": "\n📷 EXIF: No disponible",
     "exif_error": "\n📷 EXIF: Error al leer ({error})",
     "formatos_compatibles": "📝 Formatos compatibles: {formatos}",    
+    "preview_imagen": "📷 Previsualización de la imagen:", 
 }
 
 text_image_info = {
