@@ -23,7 +23,8 @@ class StableDiffusionInpainting(InpaintingBase):
         try:#
             #self.pipe = AutoPipelineForInpainting.from_pretrained("kandinsky-community/kandinsky-2-2-decoder-inpaint", torch_dtype=torch.float16)
             self.pipe = StableDiffusionInpaintPipeline.from_pretrained("runwayml/stable-diffusion-inpainting",torch_dtype=torch.float16).to("cuda" if torch.cuda.is_available() else "cpu")
-            self.pipe.enable_model_cpu_offload()
+            self.pipe.enable_model_cpu_offload()            
+            self.pipe.safety_checker = lambda images, **kwargs: (images, [False] * len(images)) # 🚫 Desactivar filtro NSFW. Saltaba mucho y devolvia un cuadrado negro xD
         except Exception as e:
             print(f"Error cargando el modelo: {e}")      
         
@@ -103,22 +104,33 @@ class StableDiffusionInpainting(InpaintingBase):
             print(f"❌ Error al pegar el parche: {e}")
             return base_img
     
-    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:     
+    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:
         try:
-            # Convertir a array numpy
+            if self.pipe is None:
+                raise RuntimeError("❌ El modelo no se ha cargado.")
+
+            # Convertir imagen a array
             image_np = np.array(imagen.convert("RGB"))
+
+            # 🟣 Combinar todas las máscaras en una sola binaria
             mask_np = np.zeros((imagen.height, imagen.width), dtype=np.uint8)
             for m in mascaras:
                 mask_np |= m.binaria.astype(np.uint8)
 
-            # Recorte inteligente
+            # 🟡 Suavizar bordes con blur para evitar cortes bruscos
+            mask_np = cv2.GaussianBlur(mask_np, (15, 15), 0).astype(np.uint8)
+
+            # 🔵 Opcional: dilatar máscara para cubrir un poco más
+            kernel = np.ones((5, 5), np.uint8)
+            mask_np = cv2.dilate(mask_np, kernel, iterations=1).astype(np.uint8)
+
+            # 🔶 Recorte inteligente con margen
             cropped_img, cropped_mask, (offset_x, offset_y) = self.crop_around_mask(image_np, mask_np, margin=self.CROP_MARGIN)
 
-            # Asegurar múltiplos de 64
+            # Asegurar que el tamaño del recorte sea múltiplo de 64 (requisito SD)
             h_crop, w_crop = cropped_img.shape[:2]
             new_w = (w_crop // 64) * 64
             new_h = (h_crop // 64) * 64
-
             cropped_img = cropped_img[:new_h, :new_w]
             cropped_mask = cropped_mask[:new_h, :new_w]
 
@@ -126,32 +138,31 @@ class StableDiffusionInpainting(InpaintingBase):
             cropped_img_pil = Image.fromarray(cropped_img)
             cropped_mask_pil = Image.fromarray((cropped_mask * 255).astype(np.uint8)).convert("L")
 
-            # Inpainting con SD
-            result_pil = self.pipe(prompt="", image=cropped_img_pil, mask_image=cropped_mask_pil).images[0]
+            # 🧠 Prompt + negative_prompt para mejorar calidad del relleno
+            prompt = ""
+            negative_prompt = ""
+
+            # 🧪 Llamar al modelo
+            result_pil = self.pipe.__call__(prompt=prompt, negative_prompt=negative_prompt, image=cropped_img_pil, mask_image=cropped_mask_pil).images[0]
+
+            # Convertir resultado a array
             result_np = np.array(result_pil)
 
-            # Asegurar que resultado y recorte tienen el mismo tamaño exacto
+            # Asegurar que resultado tenga tamaño exacto al esperado
             result_h, result_w = result_np.shape[:2]
             expected_h, expected_w = cropped_img.shape[:2]
-
             if (result_h, result_w) != (expected_h, expected_w):
                 result_np = cv2.resize(result_np, (expected_w, expected_h), interpolation=cv2.INTER_LANCZOS4)
 
-            # Pegar en imagen original
+            # 🧩 Reinsertar el parche generado en la imagen original
             final_img = image_np.copy()
-            end_y = min(offset_y + expected_h, final_img.shape[0])
-            end_x = min(offset_x + expected_w, final_img.shape[1])
-            patch_h = end_y - offset_y
-            patch_w = end_x - offset_x
-
-            #final_img[offset_y:end_y, offset_x:end_x] = result_np[:patch_h, :patch_w]
             final_img = self.safe_paste_patch(final_img, result_np, offset_x, offset_y)
-            
-            imagen_final = Image.fromarray(final_img)
 
-            return imagen_final
+            return Image.fromarray(final_img)
+
         except Exception as e:
-            print(f"❌ Error en StableDiffusionInpainting: {e}")
+            print(f"❌ Error en SD eliminar_objetos: {e}")
             return imagen
+
     
     
