@@ -18,3 +18,7 @@ easydict
 scikit-learn
 pytorch_lightning
 kornia
+diffusers
+transformers
+accelerate
+safetensors
