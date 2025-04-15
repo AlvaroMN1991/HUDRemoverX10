@@ -1,7 +1,7 @@
 # segmentadores/segmentador_base.py
 from abc import ABC, abstractmethod
 from app.utils.config import TipoSegmentacion
-from app.sam.sam_loader import MascaraSegmentada
+from app.sam.mascara_segmentada import MascaraSegmentada
 import numpy as np, random
 from dataclasses import dataclass
 from typing import Tuple, List, Dict, Type, Any

@@ -1,23 +1,14 @@
-from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List
 from PIL import Image
 import numpy as np
 import cv2
-import random
 import os
 import urllib.request
+from app.sam.mascara_segmentada import MascaraSegmentada
 from segment_anything import SamAutomaticMaskGenerator, sam_model_registry  # type: ignore
 from app.utils.tools import get_device_id
 from app.utils.config import MODEL_URLS, TipoSegmentacion
 
-# Clase para encapsular información de cada máscara
-@dataclass
-class MascaraSegmentada:
-    binaria: np.ndarray                      # Máscara binaria (0 o 1)
-    color: Tuple[int, int, int]              # Color RGB asignado
-    miniatura: Image.Image                   # Imagen de vista previa coloreada
-    sam_original: dict                       # Objeto original de SAM con metadatos
-    id:int = -1                              # ID de la máscara (opcional, para referencia)
 
 def descargar_modelo_si_no_existe(tipo_modelo: str, carpeta_modelos: str = "models") -> str:
     # Verifica y descarga el modelo si no existe
