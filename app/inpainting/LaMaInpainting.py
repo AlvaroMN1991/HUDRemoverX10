@@ -3,9 +3,8 @@ from PIL import Image
 import numpy as np
 import torch
 import cv2
-from app.sam.sam_loader import MascaraSegmentada
+from app.sam.mascara_segmentada import MascaraSegmentada
 from app.inpainting.InpaintingBase import InpaintingBase, TipoInpainting
-from app.lama.lama_downloader import get_lama_paths
 from app.lama.lama_wrapper import load_lama_model
 
 #Inpainter basado en LaMa (Look At My Assumptions).

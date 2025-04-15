@@ -1,10 +1,10 @@
 from app.inpainting.InpaintingBase import InpaintingBase
-from app.sam.sam_loader import MascaraSegmentada
+from app.sam.mascara_segmentada import MascaraSegmentada
 from app.utils.config import TipoInpainting
 from PIL import Image
-from typing import List
+from typing import List, Optional
 import torch
-from diffusers import AutoPipelineForInpainting, StableDiffusionInpaintPipeline
+from diffusers import StableDiffusionInpaintPipeline
 import numpy as np
 import cv2
 
@@ -15,8 +15,8 @@ class StableDiffusionInpainting(InpaintingBase):
     
     #Implementación del motor de inpainting usando Stable Diffusion.
     #Usa la pipeline de Hugging Face 'runwayml/stable-diffusion-inpainting'.
-    def __init__(self):
-        self.pipe: StableDiffusionInpaintPipeline = None
+    def __init__(self) -> None:
+        self.pipe: Optional[StableDiffusionInpaintPipeline] = None
 
     #Carga el modelo de Hugging Face para realizar inpainting.
     def cargar_modelo(self):  
@@ -24,38 +24,10 @@ class StableDiffusionInpainting(InpaintingBase):
             #self.pipe = AutoPipelineForInpainting.from_pretrained("kandinsky-community/kandinsky-2-2-decoder-inpaint", torch_dtype=torch.float16)
             self.pipe = StableDiffusionInpaintPipeline.from_pretrained("runwayml/stable-diffusion-inpainting",torch_dtype=torch.float16).to("cuda" if torch.cuda.is_available() else "cpu")
             self.pipe.enable_model_cpu_offload()            
-            self.pipe.safety_checker = lambda images, **kwargs: (images, [False] * len(images)) # 🚫 Desactivar filtro NSFW. Saltaba mucho y devolvia un cuadrado negro xD
+            self.pipe.safety_checker = lambda images, **kwargs: (images, [False] * len(images)) # 🚫 Desactivar filtro NSFW. Saltaba mucho y devolvia un cuadrado negro xD 
         except Exception as e:
-            print(f"Error cargando el modelo: {e}")      
-        
-    #Aplica inpainting usando Stable Diffusion sobre la imagen original, eliminando las zonas marcadas con las máscaras.
-    #Parametros de entrada:
-    #   -imagen: Imagen original en formato PIL.
-    #   -mascaras: Lista de objetos MascaraSegmentada con las zonas a eliminar.    
-    #Devuelve:
-    #   -Imagen nueva con las zonas rellenadas por Stable Diffusion.
-    def eliminar_objetos1(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:
-        try:
-            if self.pipe is None:
-                raise RuntimeError("❌ El modelo de Stable Diffusion no está cargado. Llama a cargar_modelo() primero.")
+            print(f"Error cargando el modelo: {e}")  
 
-            # Combina todas las máscaras en una sola
-            mascara_total = np.zeros((imagen.height, imagen.width), dtype=np.uint8)
-            for m in mascaras:
-                mascara_total |= m.binaria.astype(np.uint8)
-
-            # La máscara debe estar en formato PIL RGB con fondo negro y zonas a eliminar en blanco
-            mask_image = Image.fromarray(mascara_total * 255).convert("RGB")
-
-            # Llama al modelo (correcto uso del pipeline)
-            resultado = self.pipe(prompt="", image=imagen, mask_image=mask_image)
-
-            return resultado.images[0]
-
-        except Exception as e:
-            print(f"❌ Error en StableDiffusionInpainting: {e}")
-            return imagen
-        
     @staticmethod
     def crop_around_mask(image_np, mask_np, margin=64):
         try:
@@ -143,8 +115,7 @@ class StableDiffusionInpainting(InpaintingBase):
             negative_prompt = ""
 
             # 🧪 Llamar al modelo
-            result_pil = self.pipe.__call__(prompt=prompt, negative_prompt=negative_prompt, image=cropped_img_pil, mask_image=cropped_mask_pil).images[0]
-
+            result_pil = self.pipe(prompt="", image=cropped_img_pil, mask_image=cropped_mask_pil).images[0] # type: ignore
             # Convertir resultado a array
             result_np = np.array(result_pil)
 

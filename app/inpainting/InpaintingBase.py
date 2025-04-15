@@ -1,8 +1,32 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Type
 from PIL import Image
-from app.sam.sam_loader import MascaraSegmentada
+from app.sam.mascara_segmentada import MascaraSegmentada
 from app.utils.config import TipoInpainting
+import os
+import importlib
+
+
+#Recorre todos los archivos Python del módulo 'inpainting', e importa dinámicamente todos los que no sean InpaintingBase.
+#Esto asegura que se ejecuten los decoradores @InpaintingBase.register(...) sin necesidad de importar las clases manualmente.
+def _autoimport_inpainters():
+        directorio = os.path.dirname(__file__)  # Ruta física de esta carpeta
+        paquete = __package__  # Ej: 'app.inpainting'
+
+        for fichero in os.listdir(directorio):
+            if (
+                fichero.endswith(".py")
+                and fichero != "InpaintingBase.py"
+                and not fichero.startswith("__")
+            ):
+                nombre_modulo = fichero[:-3]  # Elimina el '.py'
+                try:
+                    importlib.import_module(f"{paquete}.{nombre_modulo}")
+                    print(f"✅ Autoimportado: {paquete}.{nombre_modulo}")
+                except Exception as e:
+                    print(f"❌ Error autoimportando {nombre_modulo}: {e}")
+
+#_autoimport_inpainters()  # Llamada automática
 
 #Clase base abstracta que define una interfaz común para los motores de inpainting.
 #Esta clase debe ser heredada por cada implementación concreta (OpenCV, LaMa, Stable Diffusion, etc.).
@@ -53,3 +77,5 @@ class InpaintingBase(ABC):
     @abstractmethod
     def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:        
         pass
+
+    

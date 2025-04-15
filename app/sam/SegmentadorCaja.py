@@ -1,6 +1,6 @@
 from app.sam.SegmentadorBase import SegmentadorBase, Segmentacion
 from app.utils.config import TipoSegmentacion
-from app.sam.sam_loader import MascaraSegmentada
+from app.sam.mascara_segmentada import MascaraSegmentada
 from PIL import Image
 from typing import List, Optional, Tuple
 from segment_anything import SamPredictor #type: ignore
