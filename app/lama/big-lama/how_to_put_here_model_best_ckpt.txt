@@ -1,0 +1,4 @@
+Descargar fichero de este enlace:
+https://drive.google.com/file/d/11RbsVSav3O-fReBsPHBE1nn8kcFIMnKp/view?usp=drive_link
+
+Y guardarlo aqui: app/lama/big-lama/models/best.ckpt
