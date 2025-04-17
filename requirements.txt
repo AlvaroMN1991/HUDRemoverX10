@@ -1,15 +1,16 @@
 gradio
 pillow
-#git+https://github.com/facebookresearch/segment-anything.git
+git+https://github.com/facebookresearch/segment-anything.git
 opencv-python
-torch>=1.10
+torch
 torchvision
+torchaudio
 numpy<2.0  # Temporalmente necesario por compatibilidad
 #albumentations
 albumentations==0.5.2
 omegaconf
 einops
-#git+https://github.com/advimman/lama.git
+#it+https://github.com/advimman/lama.git
 types-requests
 gdown
 webdataset
