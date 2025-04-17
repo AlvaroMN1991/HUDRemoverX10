@@ -35,10 +35,10 @@ class GradioInterface:
                         image_input = gr.Image(type="pil", label=f"{text_gradio_ui['preview_imagen']}", visible=False, interactive=False)
                     with gr.Tab("Mascaras Combinadas"):
                         combined_mask_preview = gr.Image(label="🧵 Vista general de todas las segmentaciones", interactive=False)
-                    with gr.Tab("Puntos seleccionados"):
-                        tabla_puntos = gr.Dataframe(headers=["X", "Y"], interactive=True, visible=True, label="📍 Puntos marcados")
-                        selector_filas = gr.CheckboxGroup(label="Puntos generados", choices=[], interactive=True)
-                        boton_eliminar_puntos = gr.Button("❌ Eliminar seleccionados")
+                    #with gr.Tab("Puntos seleccionados"):
+                    #    tabla_puntos = gr.Dataframe(headers=["X", "Y"], interactive=True, visible=True, label="📍 Puntos marcados")
+                    #    selector_filas = gr.CheckboxGroup(label="Puntos generados", choices=[], interactive=True)
+                    #    boton_eliminar_puntos = gr.Button("❌ Eliminar seleccionados")
 
                 with gr.Column():
                     with gr.Tab("Mascaras"):
@@ -54,24 +54,24 @@ class GradioInterface:
                 with gr.Tab("Modelo de Segmentación"):
                     opciones_sam = [("SAM B (rápido, poca precisión)", "vit_b"), ("SAM L (Equilibrado)", "vit_l"), ("SAM H (El más preciso)", "vit_h")]                    
                     sam_selector = gr.Radio(label="🧠 Modelo de SAM", choices=opciones_sam, value="vit_b", interactive=True)
-                    opciones_segmentacion = [("Automático", 0), ("Punto", 1), ("Caja", 2), ("Pincel", 3)]
-                    segmentation_selector = gr.Radio(label="🧠 Modelo de Segmentación", choices=opciones_segmentacion, value=0, interactive=True)
-                with gr.Tab("Editor de imágen"):
                     opciones_inpainting = [("OpenCV", 0), ("LaMa", 1), ("Stable Diffusion", 2)]
                     inpaint_selector = gr.Radio(label="🧠 Modelo de Inpainting", choices=opciones_inpainting, value=0, interactive=True)                
+                #with gr.Tab("Editor de imágen"):
+                    opciones_segmentacion = [("Automático", 0), ("Punto", 1), ("Caja", 2), ("Pincel", 3)]
+                    segmentation_selector = gr.Radio(label="🧠 Modelo de Segmentación", choices=opciones_segmentacion, value=0, interactive=True, visible=False)
             with gr.Row():
                 segment_button = gr.Button("📐 Detectar Segmentos")
                 apply_button = gr.Button("🧹 Eliminar HUD")
 
 
-            segmentation_selector.change(fn=self._actualizar_interaccion, inputs=segmentation_selector, outputs=image_input)
+            #segmentation_selector.change(fn=self._actualizar_interaccion, inputs=segmentation_selector, outputs=image_input)
             selector_archivo.change(fn=self.on_cargar_y_mostrar_imagen, inputs=[selector_archivo, segmentation_selector], outputs=image_input)
             image_input.change(fn=obtener_propiedades_imagen, inputs=[image_input, selector_archivo], outputs=image_info)
             segment_button.click(fn=self.on_ejecutar_segmentacion, inputs=[image_input, sam_selector, segmentation_selector], outputs=[mascaras, combined_mask_preview, segment_selector])
             segment_selector.change(fn=self.on_actualizar_imagen_mascaras, inputs=segment_selector, outputs=combined_mask_preview)
             apply_button.click(fn=self.on_ejecutar_inpainting, inputs=[inpaint_selector, segment_selector], outputs=image_output)
-            image_input.select(fn=self.on_registrar_punto, inputs=[image_input, segmentation_selector], outputs=[tabla_puntos, selector_filas, image_input])
-            boton_eliminar_puntos.click(fn=self.on_eliminar_puntos, inputs=[selector_filas], outputs=[tabla_puntos, selector_filas, image_input])
+            #image_input.select(fn=self.on_registrar_punto, inputs=[image_input, segmentation_selector], outputs=[tabla_puntos, selector_filas, image_input])
+            #boton_eliminar_puntos.click(fn=self.on_eliminar_puntos, inputs=[selector_filas], outputs=[tabla_puntos, selector_filas, image_input])
 
         return page
         

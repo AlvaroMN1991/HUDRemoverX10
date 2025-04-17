@@ -27,3 +27,4 @@ Ideas.txt
 # Ignorar todo dentro de lamarepo
 lamarepo
 app/lama/big-lama/models/best.ckpt
+*.ckpt

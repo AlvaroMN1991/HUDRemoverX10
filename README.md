@@ -91,6 +91,6 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 Lanzar la aplicación:
 
 ```bash
-python app/main.py
+python -m app.main
 ```
 
