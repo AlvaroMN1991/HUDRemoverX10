@@ -111,7 +111,7 @@ class LaMaInpainting(InpaintingBase):
         
      #Elimina objetos en la imagen usando LaMa. Combina todas las máscaras y realiza inpainting con LaMa.
     
-    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:
+    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada], prompt_sd: str="", negative_prompt_sd: str="") -> Image.Image:
     
         try:
             # Convertimos la imagen a NumPy (RGB)

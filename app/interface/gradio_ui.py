@@ -55,7 +55,9 @@ class GradioInterface:
                     opciones_sam = [("SAM B (rápido, poca precisión)", "vit_b"), ("SAM L (Equilibrado)", "vit_l"), ("SAM H (El más preciso)", "vit_h")]                    
                     sam_selector = gr.Radio(label="🧠 Modelo de SAM", choices=opciones_sam, value="vit_b", interactive=True)
                     opciones_inpainting = [("OpenCV", 0), ("LaMa", 1), ("Stable Diffusion", 2)]
-                    inpaint_selector = gr.Radio(label="🧠 Modelo de Inpainting", choices=opciones_inpainting, value=0, interactive=True)                
+                    inpaint_selector = gr.Radio(label="🧠 Modelo de Inpainting", choices=opciones_inpainting, value=0, interactive=True)
+                    prompt_sd = gr.Textbox(label="Prompt para Stable Diffusion", placeholder="Introduce tu prompt aquí...", interactive=False, visible=False)  
+                    negative_prompt_sd = gr.Textbox(label="Negative Prompt para Stable Diffusion", placeholder="Introduce tu prompt aquí...", interactive=False, visible=False)              
                 #with gr.Tab("Editor de imágen"):
                     opciones_segmentacion = [("Automático", 0), ("Punto", 1), ("Caja", 2), ("Pincel", 3)]
                     segmentation_selector = gr.Radio(label="🧠 Modelo de Segmentación", choices=opciones_segmentacion, value=0, interactive=True, visible=False)
@@ -69,14 +71,13 @@ class GradioInterface:
             image_input.change(fn=obtener_propiedades_imagen, inputs=[image_input, selector_archivo], outputs=image_info)
             segment_button.click(fn=self.on_ejecutar_segmentacion, inputs=[image_input, sam_selector, segmentation_selector], outputs=[mascaras, combined_mask_preview, segment_selector])
             segment_selector.change(fn=self.on_actualizar_imagen_mascaras, inputs=segment_selector, outputs=combined_mask_preview)
-            apply_button.click(fn=self.on_ejecutar_inpainting, inputs=[inpaint_selector, segment_selector], outputs=image_output)
+            apply_button.click(fn=self.on_ejecutar_inpainting, inputs=[inpaint_selector, segment_selector, prompt_sd, negative_prompt_sd], outputs=image_output)
             #image_input.select(fn=self.on_registrar_punto, inputs=[image_input, segmentation_selector], outputs=[tabla_puntos, selector_filas, image_input])
             #boton_eliminar_puntos.click(fn=self.on_eliminar_puntos, inputs=[selector_filas], outputs=[tabla_puntos, selector_filas, image_input])
-
+            inpaint_selector.change(fn=self.actualizar_prompt_sd, inputs=inpaint_selector, outputs=[prompt_sd, negative_prompt_sd])
         return page
         
     #Funciones de eventos
-
     @safe_callback
     def _actualizar_interaccion(self, tipo):
         return gr.update(interactive=(tipo == TipoSegmentacion.Punto.value))
@@ -94,8 +95,8 @@ class GradioInterface:
         return ejecutar_segmentacion(img, model, tipo, self.estado)
     
     @safe_callback
-    def on_ejecutar_inpainting(self, metodo, indices):
-        return ejecutar_inpainting(metodo, indices, self.estado)
+    def on_ejecutar_inpainting(self, metodo, indices, prompt_sd, negative_prompt_sd):
+        return ejecutar_inpainting(metodo, indices, prompt_sd, negative_prompt_sd, self.estado)
 
     @safe_callback
     def on_registrar_punto(self, evt, tipo):
@@ -105,4 +106,11 @@ class GradioInterface:
     def on_eliminar_puntos(self, sel):
         return eliminar_puntos(sel, self.estado)
 
-   
+    @safe_callback
+    def actualizar_prompt_sd(self,modelo):
+        # El valor 2 corresponde a "Stable Diffusion"
+        if modelo==2:
+            return gr.update(interactive=True, visible=True), gr.update(interactive=True, visible=True)
+        else:
+            return gr.update(interactive=False, visible=False), gr.update(interactive=False, visible=False)
+        

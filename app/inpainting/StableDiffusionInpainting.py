@@ -76,7 +76,7 @@ class StableDiffusionInpainting(InpaintingBase):
             print(f"❌ Error al pegar el parche: {e}")
             return base_img
     
-    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:
+    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada], prompt_sd: str="", negative_prompt_sd: str="") -> Image.Image:
         try:
             if self.pipe is None:
                 raise RuntimeError("❌ El modelo no se ha cargado.")
@@ -110,12 +110,9 @@ class StableDiffusionInpainting(InpaintingBase):
             cropped_img_pil = Image.fromarray(cropped_img)
             cropped_mask_pil = Image.fromarray((cropped_mask * 255).astype(np.uint8)).convert("L")
 
-            # 🧠 Prompt + negative_prompt para mejorar calidad del relleno
-            prompt = ""
-            negative_prompt = ""
-
+            # 🧠 Prompt + negative_prompt para mejorar calidad del relleno       
             # 🧪 Llamar al modelo
-            result_pil = self.pipe(prompt="", image=cropped_img_pil, mask_image=cropped_mask_pil).images[0] # type: ignore
+            result_pil = self.pipe(prompt_sd, negative_prompt=negative_prompt_sd, image=cropped_img_pil, mask_image=cropped_mask_pil).images[0] # type: ignore
             # Convertir resultado a array
             result_np = np.array(result_pil)
 

@@ -75,7 +75,7 @@ class InpaintingBase(ABC):
     #Devuelve:
         # -Image.Image: Imagen de salida con el área eliminada/inpainted.        
     @abstractmethod
-    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada]) -> Image.Image:        
+    def eliminar_objetos(self, imagen: Image.Image, mascaras: List[MascaraSegmentada], prompt_sd: str="", negative_prompt_sd: str="") -> Image.Image:        
         pass
 
     
