@@ -97,4 +97,10 @@ Lanzar la aplicación:
 ```bash
 python -m app.main
 ```
+## Notas Extra:
+
+Para poder usar LaMa correctamente, es necesario descargar los modelos manualmente y colocarlos en la carpeta correspondiente. Dentro de la ruta hay un fichero .txt con un enlace al fichero "best.ckpt" que es el que hay que colocar en la siguiente ruta:
+```bash
+\app\lama\big-lama\models
+```
 
