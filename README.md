@@ -1,4 +1,4 @@
-**<u>HUD Remover X10</u>**
+# **<u>HUD Remover X10</u>**
 
 ### Introducción
 
@@ -43,7 +43,11 @@ Se ha pensado en futuras mejoras que, por tiempo limitado, no se han podido real
 3. **Segmentación por pincel**: permitir al usuario "pintar" sobre la zona que desea buscar segmentación.
   
 4. **Upscaling**: mejora de resolución de la imagen.
-  
+
+## Demo video:
+[Video demo de HUD Remover X](https://youtu.be/ssSD1Vz9OP8?si=xLClDEr4YQ0B7vzI)
+
+[![Video demo de HUD Remover X](https://i.ytimg.com/vi/ssSD1Vz9OP8/maxresdefault.jpg)]([https://www.youtube.com/watch?v=FEa2diI2qgA](https://youtu.be/ssSD1Vz9OP8?si=xLClDEr4YQ0B7vzI))
 
 ## Como instalar y ejecutar la aplicación:
 
